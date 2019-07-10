@@ -115,3 +115,56 @@ func FeedList(feed *[]RssFeed) error {
 	_, e := o.QueryTable(new(RssFeed)).All(feed)
 	return e
 }
+
+func UserFeed(user *User) ([]*RssFeed, error) {
+	o := orm.NewOrm()
+	e := o.Read(user)
+	if e != nil {
+		return *new([]*RssFeed), UserNotFound
+	}
+	lr := user.FeedIdList
+
+	for i := 0; i < len(lr); i++ {
+		_ = o.Read(&lr[i])
+	}
+	return lr, nil
+}
+
+func UserFeedPost(user *User, id int64) error {
+	o := orm.NewOrm()
+	feed := RssFeed{Id: id}
+	e := o.Read(feed)
+	if e == orm.ErrMissPK || e == orm.ErrNoRows {
+		return FeedNotFound
+	} else if e == nil {
+		e = o.Read(&user)
+		if e != nil {
+			return UserNotFound
+		}
+		user.FeedIdList[len(user.FeedIdList)] = &feed
+		feed.Subscriber[len(feed.Subscriber)] = user
+		e = o.Begin()
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		_, e = o.Update(&feed)
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		_, e = o.Update(user)
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		e = o.Commit()
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		return nil
+	} else {
+		return e
+	}
+}

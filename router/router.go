@@ -23,6 +23,7 @@ func InitRouter() {
 	beego.Router("/api/v1/user", &api.Controller{})
 	beego.Router("/api/v1/register-verify", &api.Controller{})
 	beego.Router("/api/v1/feed-list", &api.Controller{})
+	beego.Router("/api/v1/feed", &api.Controller{})
 
 	beego.Router("/api/v1/captcha", &api.CaptchaController{})
 	beego.Handler("/api/v1/captcha/img/*", api.InitHandler())

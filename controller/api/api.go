@@ -66,13 +66,14 @@ func (c *Controller) Get() {
 	case "/api/v1/feed-list":
 		c.FeedListGet()
 		break
-
+	case "/api/v1/feed":
+		c.FeedGet()
+		break
 	}
 
 }
 
 func (c *Controller) Post() {
-
 	method := c.Ctx.Input.Header("X-HTTP-Method-Override")
 	if method == "Delete" {
 		c.Delete()
@@ -113,7 +114,9 @@ func (c *Controller) Post() {
 	case "/api/v1/register":
 		c.RegisterPost()
 		break
-
+	case "/api/v1/feed":
+		c.FeedPost()
+		break
 	}
 }
 
@@ -154,6 +157,7 @@ func (c *Controller) UserPost() {
 		u, e := models.Login(lq.Email, lq.Password)
 		if e == nil {
 			c.ResponseJsonWithValue(200, "登陆成功", &u)
+			c.SetSession(UserSessionKey, &lq)
 		} else if e == models.IncorrectUserOPassErr {
 			c.ResponseJson(404, "用户名或密码错误")
 		} else {
@@ -238,6 +242,72 @@ func (c *Controller) RegisterVerifyGet() {
 		c.ResponseJson(200, "邮箱验证码正确")
 	} else {
 		c.ResponseJson(404, "验证码错误")
+	}
+}
+
+/*
+	404		请登录
+*/
+func (c *Controller) FeedGet() {
+	u := c.GetSession(UserSessionKey)
+	if u == nil {
+		c.ResponseJson(404, "请登录")
+	} else {
+		lr := u.(LoginRequest)
+		u, e := models.Login(lr.Email, lr.Password)
+		if e == nil {
+			lrr, e := models.UserFeed(&u)
+			if e == models.UserNotFound {
+				c.DelSession(UserSessionKey)
+				c.ResponseJson(404, "登录信息错误，请重新登陆")
+			} else {
+				c.ResponseJsonWithValue(200, "获取用户订阅列表成功", &lrr)
+			}
+		} else if e == models.IncorrectUserOPassErr {
+			c.DelSession(UserSessionKey)
+			c.ResponseJson(404, "登录信息错误，请重新登陆")
+		} else {
+			c.ResponseJson(500, "未知错误："+e.Error())
+		}
+	}
+}
+
+func (c *Controller) FeedPost() {
+	u := c.GetSession(UserSessionKey)
+	if u == nil {
+		c.ResponseJson(404, "请登录")
+	} else {
+		lr := u.(LoginRequest)
+		u, e := models.Login(lr.Email, lr.Password)
+		if e == nil {
+			idM := make(map[string]int64)
+			body := c.Ctx.Input.RequestBody
+			e = json.Unmarshal(body, &idM)
+			if e == nil {
+				if id, ok := idM["id"]; ok {
+					e = models.UserFeedPost(&u, id)
+					if e == models.FeedNotFound {
+						c.ResponseJson(400, "Feed不存在")
+					} else if e == models.UserNotFound {
+						c.DelSession(UserSessionKey)
+						c.ResponseJson(404, "登录信息错误，请重新登陆")
+					} else if e == nil {
+						c.ResponseJson(200, "订阅成功")
+					} else {
+						c.ResponseJson(500, "未知错误："+e.Error())
+					}
+				} else {
+					c.ResponseJson(400, "参数错误")
+				}
+			} else {
+				c.ResponseJson(400, "参数错误")
+			}
+		} else if e == models.IncorrectUserOPassErr {
+			c.DelSession(UserSessionKey)
+			c.ResponseJson(404, "登录信息错误，请重新登陆")
+		} else {
+			c.ResponseJson(500, "未知错误："+e.Error())
+		}
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	_ "github.com/astaxie/beego/session/mysql"
 	"my-kindle-rss/controller/api"
 	"my-kindle-rss/models"
 	"my-kindle-rss/router"
@@ -37,6 +38,6 @@ func InitSession() {
 	//https://beego.me/docs/mvc/controller/session.md
 	beego.BConfig.WebConfig.Session.SessionOn = true
 	beego.BConfig.WebConfig.Session.SessionName = "mykindlerss-key"
-	beego.BConfig.WebConfig.Session.SessionProvider = "file"
-	beego.BConfig.WebConfig.Session.SessionProviderConfig = "data/session"
+	beego.BConfig.WebConfig.Session.SessionProvider = "mysql"
+	beego.BConfig.WebConfig.Session.SessionProviderConfig = "root:root@heyanle...@protocol(localhost:3306)/my_kindle_rss?param=value"
 }
