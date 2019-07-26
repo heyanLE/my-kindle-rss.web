@@ -45,11 +45,17 @@ func isTest(ip string) bool {
 	o := orm.NewOrm()
 	qs := o.QueryTable("file")
 
-	cond := orm.NewCondition().Or("Url", "/api/v1/register").Or("Url", "/api/v1/login")
+	i, e := qs.Filter("Url", "/api/v1/register").Filter("Ip", ip).Filter("Code__gt", 200).Filter("TimeUnix__gt", int64(time.Now().Unix()-int64(60*60))).Count()
+	beego.Info("IsTest I =>", i)
+	if i <= 5 {
+		i, e = qs.Filter("Url", "/api/v1/user").Filter("Method", "POST").Filter("Ip", ip).Filter("Code__gt", 200).Filter("TimeUnix__gt", int64(time.Now().Unix()-int64(60*60))).Count()
+	}
 
-	i, e := qs.Filter("Ip", ip).Filter("TimeUnix__gte", time.Now().Unix()-60*60).SetCond(cond).Count()
 	if e != nil {
 		beego.Error("IsTest Err :", e.Error())
 	}
-	return i >= 5
+
+	beego.Info("IsTest I =>", i)
+	beego.Info("isTest Time =>", time.Now().Unix()-60*60)
+	return i > 5
 }

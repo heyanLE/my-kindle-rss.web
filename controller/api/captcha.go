@@ -23,7 +23,9 @@ func (c *CaptchaController) Get() {
 }
 
 func CaptchaVerify(captchaId string, digits string) bool {
-	return captcha.VerifyString(captchaId, digits)
+	b := captcha.VerifyString(captchaId, digits)
+	beego.Info(captchaId, " | ", digits, " | ", b)
+	return b
 }
 
 func NewCaptcha() string {

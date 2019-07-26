@@ -20,6 +20,8 @@ func Login(email string, password string) (User, error) {
 		return u, IncorrectUserOPassErr
 	} else if e == nil {
 		if u.PasswordHash == utils.Hash(password) {
+			pe := u.PushEmail
+			e = o.QueryTable(new(PushEmail)).Filter("id", pe.Id).One(pe)
 			return u, nil
 		} else {
 			return User{Email: email}, IncorrectUserOPassErr
@@ -42,15 +44,21 @@ func Register(email string, password string) (User, error) {
 		}
 		u.Email = email
 		u.PasswordHash = utils.Hash(password)
-		u.Balance = 14
+		u.Balance = 7
 		u.PushAuto = false
 		u.CreateTime = time.Now()
 		u.PushTime = 18
 		u.PushEmail = &pe
-		pe.UnderUser[len(pe.UnderUser)] = &u
-		if len(pe.UnderUser) >= 16 {
-			pe.OverLoad = true
+		e = o.QueryTable(new(PushEmail)).Filter("id", pe.Id).One(&pe)
+		if e != nil {
+			return u, e
 		}
+		_, e = o.LoadRelated(&pe, "UnderUser")
+		beego.Info(len(pe.UnderUser))
+		if e != nil {
+			return u, e
+		}
+		pe.OverLoad = len(pe.UnderUser) >= 15
 		err := o.Begin()
 		if err != nil {
 			beego.Error("Register Error #2 : ", err.Error())
@@ -69,6 +77,7 @@ func Register(email string, password string) (User, error) {
 			return u, err
 		}
 		err = o.Commit()
+
 		if err != nil {
 			beego.Error("Register Error #4 : ", err.Error())
 		}
@@ -79,6 +88,19 @@ func Register(email string, password string) (User, error) {
 	} else {
 		beego.Error("Register Error #4 : ", e.Error())
 		return u, e
+	}
+}
+
+func Exit(email string) bool {
+	o := orm.NewOrm()
+	u := User{Email: email}
+	err := o.Read(&u, "Email")
+	if err == orm.ErrNoRows {
+		return false
+	} else if err == orm.ErrMissPK {
+		return false
+	} else {
+		return true
 	}
 }
 
@@ -118,31 +140,32 @@ func FeedList(feed *[]RssFeed) error {
 
 func UserFeed(user *User) ([]*RssFeed, error) {
 	o := orm.NewOrm()
-	e := o.Read(user)
+
+	e := o.QueryTable(new(User)).Filter("id", user.Id).One(user)
+	if e != nil {
+		return *new([]*RssFeed), e
+	}
+	_, e = o.LoadRelated(user, "FeedIdList")
 	if e != nil {
 		return *new([]*RssFeed), UserNotFound
 	}
-	lr := user.FeedIdList
-
-	for i := 0; i < len(lr); i++ {
-		_ = o.Read(&lr[i])
-	}
-	return lr, nil
+	return user.FeedIdList, nil
 }
 
 func UserFeedPost(user *User, id int64) error {
 	o := orm.NewOrm()
 	feed := RssFeed{Id: id}
-	e := o.Read(feed)
+	e := o.Read(&feed)
 	if e == orm.ErrMissPK || e == orm.ErrNoRows {
 		return FeedNotFound
 	} else if e == nil {
-		e = o.Read(&user)
+		e = o.Read(user)
 		if e != nil {
 			return UserNotFound
 		}
-		user.FeedIdList[len(user.FeedIdList)] = &feed
-		feed.Subscriber[len(feed.Subscriber)] = user
+		m2m := o.QueryM2M(&feed, "Subscriber")
+		_, _ = m2m.Add(user)
+
 		e = o.Begin()
 		if e != nil {
 			_ = o.Rollback()

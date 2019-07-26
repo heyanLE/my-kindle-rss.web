@@ -28,6 +28,7 @@ const (
 )
 
 func Hash(str string) string {
+	beego.Info("Hash:", str)
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
@@ -44,13 +45,13 @@ func EmailCaptcha(email string, captcha string, date string) {
 	hello := MORNING
 	n := time.Now().Hour()
 	switch {
-	case n > 18:
+	case n > 17:
 		hello = NIGHT
 		break
 	case n > 14:
 		hello = AFTERNOON
 		break
-	case n > 11:
+	case n > 10:
 		hello = NOON
 		break
 	case n > 6:

@@ -3,15 +3,17 @@
 <head>
     <title>MyKindleRss  - 每天推送好文章</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="../css/mdui.min.css">
-    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="css/mdui.min.css">
+    <link rel="stylesheet" href="css/index.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 </head>
-<body class="mdui-theme-primary-deep-purple">
+<body class="mdui-theme-primary-deep-purple mdui-center mdui-color-theme">
 
 <!--Banner-->
 <header id="first_wallpaper">
     <div  class=" background-gray" >
-        <div class="mdui-appbar mdui-shadow-0">
+        <div id="appbar" class="mdui-appbar mdui-shadow-0">
             <div class="mdui-toolbar mdui-text-color-white">
                 <a href="/" class="mdui-typo-title">My kindle rss</a>
                 <a href="/" class="mdui-typo-title mdui-hidden-xs">首页</a>
@@ -19,23 +21,97 @@
             </div>
         </div>
 
-        <div>
-            <div class="mdui-text-color-white headline">感受阅读的魅力</div>
-            <div class="mdui-text-color-white text-body">在简单的设置之后，My kindle rss 可以每天把更新文章推送到你的Kindle。现已支持添加自定义Rss订阅源。</div>
+        <div id="banner_content" class="mdui-valign">
+            <div class="advertise">
+                <div class="mdui-text-color-white headline">每天推送好文章</div>
+                <div class="mdui-text-color-white text-body">设置Rss订阅 <br> 每天把文章推送给你 <br> 支持添加自定义Rss订阅源</div>
+                <button onclick="run()" style="line-height:48px" class="user-button mdui-btn mdui-ripple mdui-color-white mdui-ripple-grey">立刻使用</button>
+            </div>
         </div>
-
+        <i class="down mdui-icon material-icons mdui-text-color-white-icon">&#xe313;</i>
     </div>
 </header>
 
+<div class="mdui-container" style="margin-top: 40px;">
+    <div class="mdui-row mdui-row-lg-4 mdui-row-md-3 mdui-row-sm-2 mdui-row-xs-1">
+        <div class="card mdui-col mdui-ripple">
+            <i class="mdui-icon material-icons" style="float: left">&#xe24e;</i>
+            <span style=" margin-left: 10px ; display: inline-block ; width: 84%">
+                <div class="item-title">易操作</div>
+                <div class="item-message">简单的设置后，每天就能自动推送，无需额外操作</div>
+            </span>
+        </div>
+        <div class="card mdui-col mdui-ripple">
+            <i class="mdui-icon material-icons" style="float: left">&#xe5ca;</i>
+            <span style=" margin-left: 10px ; display: inline-block; width: 84%">
+                <div class="item-title">不限制</div>
+                <div class="item-message">没有限制订阅数量，零氪金，看到够</div>
+            </span>
+        </div>
+        <div class="card mdui-col mdui-ripple">
+            <i class="mdui-icon material-icons" style="float: left">&#xe251;</i>
+            <span style=" margin-left: 10px ; display: inline-block; width: 84%">
+                <div class="item-title">图片支持</div>
+                <div class="item-message">图文并茂的文章才精彩</div>
+            </span>
+        </div>
+        <div class="card mdui-col mdui-ripple">
+            <i class="mdui-icon material-icons" style="float: left">&#xe3c9;</i>
+            <span style=" margin-left: 10px ; display: inline-block; width: 84%">
+                <div class="item-title">自定义Rss</div>
+                <div class="item-message">免费用户也可以自定义Rss，想看什么自己做主</div>
+            </span>
+        </div>
+    </div>
+</div>
 
+<footer style="font-size: smaller ; text-align: center ; margin-top: 30px"> Copyright © 2017 - 2019 <a href="http://www.mykindlerss.cn">mykindlerss.cn</a>  All Rights Reserved.</footer>
 
-
-<script src="../js/mdui.min.js"></script>
+<script src="js/mdui.js"></script>
+<script src="js/jquery-3.4.1.min.js"></script>
 <script>
-    document.getElementById("first_wallpaper").style.height = window.innerHeight+"px";
+    let i;
+    let s = getQueryString("wallpaper");
+    if (s != null){
+        i =  parseInt(s);
+        constructor.log(s)
+    }else{
+        i = Math.floor(Math.random()*13)+1;
+    }
+
+    const wDiv = document.getElementById("first_wallpaper");
+
+    wDiv.style.backgroundImage = "url('./img/wallpaper-"+i+".png')";
+
+    wDiv.style.height = window.innerHeight+"px";
+    wDiv.style.width = "100%";
+
+    $("#first_wallpaper").fadeToggle(800);
+
+    const h = document.getElementById("appbar").clientHeight;
+    document.getElementById("banner_content").style.height = window.innerHeight-h + "px";
+
+    //${'#first_wallpaper'}.fadeIn();
+
     window.onresize = function() {
         document.getElementById("first_wallpaper").style.height = window.innerHeight+"px";
+        const h = document.getElementById("appbar").clientHeight;
+        document.getElementById("banner_content").style.height = window.innerHeight-h + "px";
     };
+
+    function run() {
+        window.location.href = "/home?wallpaper="+i
+    }
+
+    function getQueryString(name) {
+        let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        let r = window.location.search.substr(1).match(reg);
+        if (r != null) {
+            return unescape(r[2]);
+        }
+        return null;
+    }
+
 </script>
 </body>
 </html>

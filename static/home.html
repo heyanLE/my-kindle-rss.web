@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <title>MyKindleRss  - 每天推送好文章</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="css/mdui.min.css">
+    <link rel="stylesheet" href="css/home.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+</head>
+<body class="mdui-theme-primary-deep-purple mdui-center mdui-color-theme">
+
+<!--context-->
+<div id="wallpaper">
+    <div id="context"  class=" background-gray"   style="overflow-y: scroll">
+        <div id="appbar" class="mdui-appbar  mdui-shadow-0">
+            <div class="mdui-toolbar mdui-text-color-white">
+                <a href="/" class="mdui-typo-title">My Kindle Rss</a>
+                <a href="/home" class="mdui-typo-title mdui-hidden-xs">每天推送好文章</a>
+                <div class="mdui-toolbar-spacer"></div>
+                <button id="button_help" class="mdui-btn mdui-btn-icon" mdui-tooltip="{content: '帮助'}"><i class="mdui-icon material-icons">&#xe887;</i></button>
+            </div>
+        </div>
+
+        <div class="mdui-container container">
+            <div class="mdui-row-sm-3">
+                <div class="mdui-col content-col">
+                    <div class="mdui-card card  mdui-hoverable">
+                        <i class="mdui-icon material-icons">&#xe7fd;</i>
+                        <span class="card-title">用户</span>
+                        <div id="user_card_content" class="card-content">未登录</div>
+                        <div id="user_card_action_out" class="card-actions-div">
+                            <button class="action mdui-btn mdui-ripple mdui-color-red" onclick="onContentLoginButtonClick()">登录</button>
+                            <button class="action mdui-btn mdui-ripple" onclick="onContentRegisterButtonClick()">注册</button>
+                        </div>
+                        <div id="user_card_action_up" class="card-actions-div">
+                            <button id="button_login_out" class="action mdui-btn mdui-ripple mdui-color-red" onclick="onContentLoginOutButtonClick()">登出</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mdui-col content-col">
+                    <div class="mdui-card card  mdui-hoverable">
+                        <i class="mdui-icon material-icons">&#xe1a3;</i>
+                        <span class="card-title">剩余自动推送次数</span>
+                        <div id="balance_card_content" class="card-content">0</div>
+                        <div class="card-actions-div">
+                            <button class="action mdui-btn mdui-ripple">充能</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mdui-col content-col">
+                    <div class="mdui-card card  mdui-hoverable">
+                        <i class="mdui-icon material-icons">&#xe2c0;</i>
+                        <span class="card-title">推送</span>
+                        <div id="push_card_content" class="card-content">自动推送关闭</div>
+                        <div class="card-actions-div">
+                            <button class="action-max mdui-btn mdui-ripple">立刻推送</button>
+                            <button class="action-max mdui-btn mdui-ripple">推送设置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mdui-row">
+                <div class="mdui-col-sm-4  content-col" style="padding-top: 0 !important;">
+                    <div class="card mdui-card  mdui-hoverable">
+                        <ul id="feed_list_ul" class="mdui-list">
+                            <li onclick="onClassLiClick('全部订阅')" id="feed_li_all" class="mdui-list-item mdui-ripple">
+                                <i class="mdui-list-item-icon mdui-icon material-icons mdui-text-color-blue">&#xe871;</i>
+                                <div class="mdui-list-item-content">全部订阅</div>
+                            </li>
+                            <li onclick="onClassLiClick('我的订阅')" id="feed_li_mine" class="mdui-list-item mdui-ripple">
+                                <i class="mdui-list-item-icon mdui-icon material-icons mdui-text-color-amber">&#xe838;</i>
+                                <div class="mdui-list-item-content">我的订阅</div>
+                            </li>
+                            <li class="mdui-divider-inset" style="margin-left: 0 !important;"></li>
+                            <div id="left_li_load" style="width: 60px;height: 60px;margin: 30px" class="mdui-center mdui-spinner mdui-spinner-colorful"></div>
+                        </ul>
+
+                    </div>
+                </div>
+                <div class="mdui-col-sm-8  content-col" style="padding-top: 0 !important;">
+                    <div class="card mdui-card card-m  mdui-hoverable">
+                        <div id="feed_from_group" class="mdui-btn-group">
+                        </div>
+
+
+
+                        <div id="right_li_load" style="width: 60px;height: 60px;margin: 30px" class="mdui-center mdui-spinner mdui-spinner-colorful"></div>
+                        <ul id="feed_content_ul" class="mdui-list">
+                        </ul>
+                        <div id="page_div" style="max-width: 420px;width: auto;text-align: center" class="mdui-center">
+                            <button onclick="onPageLastButtonClick()" id="button_page_last" class="mdui-btn mdui-btn-dense mdui-ripple" style="text-align: center;min-width: 60px;margin: 0;padding: 0 !important;">上一页</button>
+                            <span id="page_button_span" style="display: inline-block">
+                            </span>
+                            <button onclick="onPageNextButtonClick()" id="button_page_next" class="mdui-btn mdui-btn-dense mdui-ripple" style="text-align: center;min-width: 60px;margin: 0;padding: 0 !important;">下一页</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div style="height: 50px">
+
+        </div>
+
+        <footer class="mdui-text-color-white" style="font-size: smaller ; text-align: center ; margin-top: 30px"> Copyright © 2017 - 2019 <a href="http://www.mykindlerss.cn">mykindlerss.cn</a>  All Rights Reserved.</footer>
+    </div>
+
+</div>
+
+<!--dialog-->
+<!--Login-->
+<div class="mdui-dialog" id="dialog_login">
+    <div class="dialog-title-back mdui-color-deep-purple">
+        <div class="dialog-title mdui-text-color-white">登录</div>
+        <button mdui-dialog-close class="dialog-close mdui-btn mdui-btn-icon mdui-text-color-white"><i class="mdui-icon material-icons">&#xe5cd;</i></button>
+    </div>
+    <div class="dialog-content">
+            <div id="dialog_login_email_input_div" class="mdui-textfield mdui-textfield-floating-label">
+                <label class="mdui-textfield-label">邮箱</label>
+                <input id="login_email_input" class="mdui-textfield-input" type="email" required/>
+                <div class="mdui-textfield-error">请输入正确的邮箱</div>
+            </div>
+            <div class="mdui-textfield mdui-textfield-floating-label" id="dialog_login_password_div">
+                <label class="mdui-textfield-label">密码</label>
+                <input onclick="onLoginPasswordInputClick()" id="login_password_input" class="mdui-textfield-input" type="password" required/>
+                <div class="mdui-textfield-error" id="dialog_login_password_error">密码不能为空</div>
+            </div>
+
+
+        <div id="dialog_login_captcha_div" style="display: none">
+            <div class="dialog-register-captcha-div">
+                <div id="dialog_login_captcha_input_div" class="mdui-textfield mdui-textfield-floating-label dialog-register-captcha-input-div">
+                    <label class="mdui-textfield-label">验证码</label>
+                    <input onclick="onLoginCaptchaInputClick()" id="login_captcha_input" class="mdui-textfield-input" type="tel" required/>
+                    <div id="login_captcha_err" class="mdui-textfield-error">请输入正确的验证码</div>
+                </div>
+            </div>
+            <img onClick="onLoginCaptchaImgClick()" id="dialog_login_captcha_img"  class="captcha-img mdui-float-right" alt="验证码"/>
+        </div>
+
+        <div class="dialog-action">
+            <button class="mdui-btn mdui-ripple more-option" type="button" mdui-menu="{target: '#mc-login-menu', position: 'top', covered: true}">更多选项</button>
+            <ul class="mdui-menu" id="mc-login-menu" >
+                <li class="mdui-menu-item"><a class="mdui-ripple mc-password-reset-trigger">忘记密码</a></li>
+                <li class="mdui-menu-item"><a mdui-dialog-close class="mdui-ripple mc-register-trigger" onclick="onContentRegisterButtonClick()">创建新账号</a></li></ul>
+
+            <button onclick="onLoginButtonClick()" id="login_button" class="mdui-btn mdui-ripple mdui-color-pink-accent mdui-float-right">登录</button>
+        </div>
+
+        <div style="height: 20px"></div>
+    </div>
+</div>
+
+<div class="mdui-dialog" id="dialog_register_first">
+    <div class="dialog-title-back mdui-color-green">
+        <div class="dialog-title mdui-text-color-white">注册</div>
+        <button mdui-dialog-close class="dialog-close mdui-btn mdui-btn-icon mdui-text-color-white"><i class="mdui-icon material-icons">&#xe5cd;</i></button>
+    </div>
+    <div class="dialog-content">
+        <div id="dialog_register_first_email_div" class="mdui-textfield mdui-textfield-floating-label">
+            <label class="mdui-textfield-label">邮箱</label>
+            <input onclick="onRegisterFirstEmailInputClick()" id="register_email_input" class="mdui-textfield-input" type="email" required/>
+            <div id="register_email_err" class="mdui-textfield-error">请输入正确的邮箱</div>
+        </div>
+
+        <div id="dialog_register_captcha_D_div" style="display: none">
+            <div class="dialog-register-captcha-div">
+                <div id="register_captcha_input_div" class="mdui-textfield mdui-textfield-floating-label dialog-register-captcha-input-div">
+                    <label class="mdui-textfield-label">验证码</label>
+                    <input onclick="onRegisterCaptchaInputClick()" id="register_captcha_input" class="mdui-textfield-input" type="tel" required/>
+                    <div id="register_captcha_err" class="mdui-textfield-error">验证码不能为空</div>
+                </div>
+            </div>
+            <img onclick="onRegisterCaptchaImgClick()" id="dialog_register_captcha_img"  class="captcha-img mdui-float-right" alt="验证码"/>
+        </div>
+
+        <div class="dialog-register-captcha-div">
+            <div id="register_email_captcha_div" class="mdui-textfield mdui-textfield-floating-label dialog-register-captcha-input-div">
+                <label class="mdui-textfield-label">邮箱验证码</label>
+                <input onclick="onRegisterEmailCaptchaInputClick()" id="register_email_captcha_input" class="mdui-textfield-input" type="tel" required/>
+                <div id="register_email_captcha_err" class="mdui-textfield-error">请输入正确的验证码</div>
+            </div>
+        </div>
+        <button onclick="onRegisterSendEmailButtonClick()" id="send_email_button" class="mdui-btn mdui-ripple mdui-float-right dialog-register-send">点击发送</button>
+
+        <div class="dialog-action">
+            <button mdui-dialog-close class="mdui-btn mdui-ripple more-option" mdui-dialog="{target: '#dialog_login'}" type="button">已有账号？</button>
+            <button onclick="onRegisterNextButtonClick()" id="register_next_button" class="mdui-btn mdui-ripple mdui-color-pink-accent mdui-float-right">下一步</button>
+        </div>
+    </div>
+</div>
+
+<div class="mdui-dialog" id="dialog_register_next">
+    <div class="dialog-title-back mdui-color-green">
+        <div class="dialog-title mdui-text-color-white">注册</div>
+        <button mdui-dialog-close class="dialog-close mdui-btn mdui-btn-icon mdui-text-color-white"><i class="mdui-icon material-icons">&#xe5cd;</i></button>
+    </div>
+    <div class="dialog-content">
+        <div id="register_next_password_div" class="mdui-textfield mdui-textfield-floating-label">
+            <label class="mdui-textfield-label">密码</label>
+            <input oninput="onRegisterPasswordInputOnInput()" id="register_password_input" class="mdui-textfield-input" type="password" required/>
+            <div class="mdui-textfield-error">密码至少为6位</div>
+        </div>
+        <div id="dialog_register_password_c_div" class="mdui-textfield mdui-textfield-floating-label">
+            <label class="mdui-textfield-label">密码</label>
+            <input oninput="onRegisterPasswordInputCInput()" id="register_password_c_input" class="mdui-textfield-input" type="password" required/>
+            <div class="mdui-textfield-error">请输入一致密码</div>
+        </div>
+
+
+        <div class="dialog-action">
+            <button onclick="onRegisterButtonClick()" id="register_finish_button" class="mdui-btn mdui-ripple mdui-color-pink-accent mdui-float-right">完成注册</button>
+        </div>
+
+        <div style="height: 20px"></div>
+    </div>
+</div>
+
+
+
+<script src="js/mdui.min.js"></script>
+<script src="js/jquery-3.4.1.min.js"></script>
+<script src="js/fetch.js"></script>
+<script src="js/home.js"></script>
+<script src="js/feed.js"></script>
+<script>
+
+    let i;
+    let s = getQueryString("wallpaper");
+    if (s != null){
+        i =  parseInt(s);
+        //constructor.log(s)
+    }else{
+        i = Math.floor(Math.random()*13)+1;
+    }
+    const wDiv = document.getElementById("wallpaper");
+
+    wDiv.style.backgroundImage = "url('./img/wallpaper-"+i+".png')";
+
+    wDiv.style.height = window.innerHeight+"px";
+    wDiv.style.width = "100%";
+
+    $("#wallpaper").fadeToggle(800);
+
+
+    //${'#first_wallpaper'}.fadeIn();
+
+    const colClass = $("#col_class");
+    const colFrom = $("#col_from");
+
+    if (window.innerWidth <= 726 && window.innerWidth>=600){
+        colClass.removeClass("mdui-col-xs-5");
+        colFrom.removeClass("mdui-col-xs-7");
+        colClass.addClass("mdui-col-xs-12");
+        colFrom.addClass("mdui-col-xs-12");
+        $("#ul_divider_class").css("display","block");
+    }else{
+        colClass.removeClass("mdui-col-xs-12");
+        colFrom.removeClass("mdui-col-xs-12");
+        colClass.addClass("mdui-col-xs-5");
+        colFrom.addClass("mdui-col-xs-7");
+        $("#ul_divider_class").css("display","none");
+    }
+
+    window.onresize = function() {
+        document.getElementById("wallpaper").style.height = window.innerHeight+"px";
+
+        if (window.innerWidth <= 726 && window.innerWidth>=600){
+            colClass.removeClass("mdui-col-xs-5");
+            colFrom.removeClass("mdui-col-xs-7");
+            colClass.addClass("mdui-col-xs-12");
+            colFrom.addClass("mdui-col-xs-12");
+            $("#ul_divider_class").css("display","block");
+        }else{
+            colClass.removeClass("mdui-col-xs-12");
+            colFrom.removeClass("mdui-col-xs-12");
+            colClass.addClass("mdui-col-xs-5");
+            colFrom.addClass("mdui-col-xs-7");
+            $("#ul_divider_class").css("display","none");
+        }
+    };
+
+
+    function getQueryString(name) {
+        let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        let r = window.location.search.substr(1).match(reg);
+        if (r != null) {
+            return unescape(r[2]);
+        }
+        return null;
+    }
+
+</script>
+</body>
+</html>

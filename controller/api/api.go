@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	UserSessionKey = "UserSession"
+	UserSessionKey   = "UserSession"
+	HashRegisterSalt = "92fad7c39bc69f7dde98527a93d676bb"
 )
 
 type Controller struct {
@@ -69,6 +70,16 @@ func (c *Controller) Get() {
 	case "/api/v1/feed":
 		c.FeedGet()
 		break
+	case "/api/v1/feed-from-list":
+		c.FeedFromListGet()
+		break
+	case "/api/v1/feed-class-list":
+		c.FeedClassListGet()
+		break
+	case "/api/v1/feed-refresh":
+		c.FeedListRefresh()
+		break
+
 	}
 
 }
@@ -100,6 +111,8 @@ func (c *Controller) Post() {
 
 			captchaId := c.Ctx.Input.Header("X-Captcha-Id")
 			captcha := c.Ctx.Input.Header("X-Captcha")
+
+			beego.Info("Test")
 
 			if CaptchaVerify(captchaId, captcha) {
 				c.UserPost()
@@ -157,7 +170,7 @@ func (c *Controller) UserPost() {
 		u, e := models.Login(lq.Email, lq.Password)
 		if e == nil {
 			c.ResponseJsonWithValue(200, "登陆成功", &u)
-			c.SetSession(UserSessionKey, &lq)
+			c.SetSession(UserSessionKey, &u)
 		} else if e == models.IncorrectUserOPassErr {
 			c.ResponseJson(404, "用户名或密码错误")
 		} else {
@@ -179,11 +192,17 @@ func (c *Controller) RegisterGet() {
 	if email == "" || !utils.VerifyEmailFormat(email) {
 		c.ResponseJson(400, "参数错误")
 	} else {
+
+		if models.Exit(email) {
+			c.ResponseJson(231, "邮箱已存在")
+			return
+		}
+
 		rand.Seed(time.Now().Unix())
 		captcha := strconv.FormatInt(rand.Int63n(99999), 10)
 		dateUnix := time.Now().Unix() + 60*20
 		dateString := time.Unix(dateUnix, 0).Format("2006-01-02 15:04:05")
-		token := utils.Hash(email + strconv.FormatInt(dateUnix, 10) + captcha)
+		token := utils.Hash(email + strconv.FormatInt(dateUnix, 10) + captcha + HashRegisterSalt)
 		v := map[string]interface{}{
 			"email":     email,
 			"token":     token,
@@ -202,13 +221,15 @@ func (c *Controller) RegisterPost() {
 			c.ResponseJson(400, "参数错误")
 		}
 		n := time.Now().Unix()
-		if n >= rq.DateUnix {
-			tokenN := utils.Hash(rq.Email + strconv.FormatInt(rq.DateUnix, 10) + rq.Captcha)
+		beego.Info("n =>", n, "| d =>", rq.DateUnix)
+		if n <= rq.DateUnix {
+			tokenN := utils.Hash(rq.Email + strconv.FormatInt(rq.DateUnix, 10) + rq.Captcha + HashRegisterSalt)
 			if tokenN == rq.Token {
 				u, e := models.Register(rq.Email, rq.Password)
 				if e == models.EmailExistErr {
-					c.ResponseJson(404, "邮箱已存在")
+					c.ResponseJson(231, "邮箱已存在")
 				} else if e == nil {
+					c.SetSession(UserSessionKey, &u)
 					c.ResponseJsonWithValue(200, "注册成功", &u)
 				} else {
 					beego.Error("RegisterPostErr :", e.Error())
@@ -232,28 +253,35 @@ func (c *Controller) RegisterVerifyGet() {
 	captcha := c.GetString("_captcha")
 	if e != nil || email == "" || token == "" || captcha == "" {
 		c.ResponseJson(400, "参数错误")
+		return
 	}
+
+	if models.Exit(email) {
+		c.ResponseJson(231, "邮箱已存在")
+		return
+	}
+
 	n := time.Now().Unix()
 	if n >= dateUnix {
 		c.ResponseJson(303, "邮箱验证码过时")
+		return
 	}
-	tokenN := utils.Hash(email + strconv.FormatInt(dateUnix, 10) + captcha)
+	tokenN := utils.Hash(email + strconv.FormatInt(dateUnix, 10) + captcha + HashRegisterSalt)
 	if token == tokenN {
 		c.ResponseJson(200, "邮箱验证码正确")
+		return
 	} else {
 		c.ResponseJson(404, "验证码错误")
+		return
 	}
 }
 
-/*
-	404		请登录
-*/
 func (c *Controller) FeedGet() {
 	u := c.GetSession(UserSessionKey)
 	if u == nil {
 		c.ResponseJson(404, "请登录")
 	} else {
-		lr := u.(LoginRequest)
+		lr := u.(*LoginRequest)
 		u, e := models.Login(lr.Email, lr.Password)
 		if e == nil {
 			lrr, e := models.UserFeed(&u)
@@ -277,14 +305,14 @@ func (c *Controller) FeedPost() {
 	if u == nil {
 		c.ResponseJson(404, "请登录")
 	} else {
-		lr := u.(LoginRequest)
+		lr := u.(*LoginRequest)
 		u, e := models.Login(lr.Email, lr.Password)
 		if e == nil {
 			idM := make(map[string]int64)
 			body := c.Ctx.Input.RequestBody
 			e = json.Unmarshal(body, &idM)
 			if e == nil {
-				if id, ok := idM["id"]; ok {
+				if id, ok := idM["Feed-id"]; ok {
 					e = models.UserFeedPost(&u, id)
 					if e == models.FeedNotFound {
 						c.ResponseJson(400, "Feed不存在")
@@ -318,7 +346,7 @@ func (c *Controller) FeedListGet() {
 			var ss []models.RssFeed
 			e = json.Unmarshal(flS.([]byte), &ss)
 			if e == nil {
-				c.ResponseJsonWithValue(200, "获取Feed列表成功-缓存", &ss)
+				c.filterFeed(&ss)
 				return
 			}
 		}
@@ -326,10 +354,9 @@ func (c *Controller) FeedListGet() {
 	var rl []models.RssFeed
 	e = models.FeedList(&rl)
 	if e == nil {
-		c.ResponseJsonWithValue(200, "获取Feed列表成功-数据库", &rl)
+		c.filterFeed(&rl)
 		jsBy, e := json.Marshal(rl)
 		jsStr := string(jsBy)
-		beego.Info(jsStr)
 		if e == nil {
 			e = ca.Put("FeedListAll", jsStr, time.Hour*1)
 			if e != nil {
@@ -341,6 +368,129 @@ func (c *Controller) FeedListGet() {
 	} else {
 		beego.Error("FeedListGetErr #3 : ", e.Error())
 		c.ResponseJson(500, "未知错误："+e.Error())
+	}
+}
+func (c *Controller) filterFeed(listY *[]models.RssFeed) {
+	form := c.GetString("_from")
+	typeT, e := c.GetInt("_type")
+	class := c.GetString("_class")
+
+	beego.Info("Filter")
+
+	var list []models.RssFeed
+	for i := 0; i < len(*listY); i++ {
+		r := (*listY)[i]
+		beego.Info("_from => ", form, "| From => ", r.From)
+		if (form != "" && r.From == form) || form == "" {
+			if (e != nil) || (r.Type == typeT) {
+				if (class != "" && r.Class == class) || class == "" {
+					list = append(list, r)
+				}
+			}
+		}
+	}
+	c.ResponseJsonWithValue(200, "获取Feed列表成功", &list)
+}
+
+func (c *Controller) FeedFromListGet() {
+	ca, e := cache.NewCache("redis", `{"key":"MyKindleRss","conn":"127.0.0.1:6379"}`)
+	if e == nil {
+		if flS := ca.Get("FeedListAll"); flS != nil {
+			var ss []models.RssFeed
+			e = json.Unmarshal(flS.([]byte), &ss)
+			if e == nil {
+				c.FromList(&ss)
+				return
+			}
+		}
+	}
+	var rl []models.RssFeed
+	e = models.FeedList(&rl)
+	if e == nil {
+		c.FromList(&rl)
+		jsBy, e := json.Marshal(rl)
+		jsStr := string(jsBy)
+		if e == nil {
+			e = ca.Put("FeedListAll", jsStr, time.Hour*1)
+			if e != nil {
+				beego.Error("FeedListGetErr #1 : ", e.Error())
+			}
+		} else {
+			beego.Error("FeedListGetErr #2 : ", e.Error())
+		}
+	} else {
+		beego.Error("FeedListGetErr #3 : ", e.Error())
+		c.ResponseJson(500, "未知错误："+e.Error())
+	}
+}
+func (c *Controller) FromList(listY *[]models.RssFeed) {
+	var l = make(map[string]int)
+	var ll []string
+	for i := 0; i < len(*listY); i++ {
+		r := (*listY)[i]
+		if _, ok := l[r.From]; !ok {
+			l[r.From] = 1
+			ll = append(ll, r.From)
+		}
+	}
+	c.ResponseJsonWithValue(200, "获取From成功", &ll)
+}
+
+func (c *Controller) FeedClassListGet() {
+	ca, e := cache.NewCache("redis", `{"key":"MyKindleRss","conn":"127.0.0.1:6379"}`)
+	if e == nil {
+		if flS := ca.Get("FeedListAll"); flS != nil {
+			var ss []models.RssFeed
+			e = json.Unmarshal(flS.([]byte), &ss)
+			if e == nil {
+				c.ClassList(&ss)
+				return
+			}
+		}
+	}
+	var rl []models.RssFeed
+	e = models.FeedList(&rl)
+	if e == nil {
+		c.ClassList(&rl)
+		jsBy, e := json.Marshal(rl)
+		jsStr := string(jsBy)
+		if e == nil {
+			e = ca.Put("FeedListAll", jsStr, time.Hour*1)
+			if e != nil {
+				beego.Error("FeedListGetErr #1 : ", e.Error())
+			}
+		} else {
+			beego.Error("FeedListGetErr #2 : ", e.Error())
+		}
+	} else {
+		beego.Error("FeedListGetErr #3 : ", e.Error())
+		c.ResponseJson(500, "未知错误："+e.Error())
+	}
+}
+func (c *Controller) ClassList(listY *[]models.RssFeed) {
+	var l = make(map[string]int)
+	var ll []string
+	for i := 0; i < len(*listY); i++ {
+		r := (*listY)[i]
+		if _, ok := l[r.Class]; !ok {
+			l[r.Class] = 1
+			ll = append(ll, r.Class)
+		}
+	}
+	c.ResponseJsonWithValue(200, "获取From成功", &ll)
+}
+
+func (c *Controller) FeedListRefresh() {
+	ca, e := cache.NewCache("redis", `{"key":"MyKindleRss","conn":"127.0.0.1:6379"}`)
+	if e == nil {
+		e = ca.Delete("FeedListAll")
+		if e == nil {
+			c.ResponseJson(200, "清除缓存成功")
+		} else {
+			c.ResponseJson(500, "错误："+e.Error())
+		}
+	} else {
+		c.ResponseJson(500, "错误："+e.Error())
 	}
 }
 

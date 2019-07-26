@@ -1,0 +1,201 @@
+*{
+    font-family:Microsoft YaHei,Roboto,serif;
+}
+
+body{
+    min-width: 320px;
+}
+
+#wallpaper{
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: center;
+    background-attachment: initial;
+    background-origin: initial;
+    background-clip: initial;
+    background-color: initial;
+    display: none;
+}
+
+#button_help{
+    margin-right: 16px;
+}
+
+.background-gray{
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.content-col{
+    padding: 4px;
+}
+
+.container{
+    max-width: 1000px;
+    margin-top: 8px;
+}
+
+.card{
+    margin-top: 8px;
+    max-width: 325px;
+    padding: 8px;
+    filter:alpha(Opacity=95);-moz-opacity:0.95;opacity: 0.95;
+}
+
+.card *{
+    filter: none;
+}
+
+.card-title{
+    font-family:Microsoft YaHei,Roboto,serif;
+    margin-left: 4px;
+    line-height: 24px;
+    font-size: 16px;
+}
+
+.card-content{
+    margin-top: 32px;
+    margin-bottom: 32px;
+    text-align:center;
+    font-size: 25px;
+}
+
+.action{
+    min-width: 80px;
+}
+
+.action-max{
+    min-width: 80px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+#user_card_action_up{
+    display: none;
+}
+
+@media screen and (max-width: 600px) {
+    .card{
+        display:block!important;
+        margin-right:auto!important;
+        margin-left:auto!important
+    }
+}
+
+.dialog-title{
+    margin-left: 30px;
+    font-family:Microsoft YaHei,Roboto,serif;
+    font-size: 20px;
+    padding-top: 150px;
+    width: 50px;
+    display: inline-block;
+}
+
+.dialog-title-back{
+    height: 198px;
+    width: 100%;
+}
+
+#dialog_login{
+    min-width: 330px;
+    max-width: 448px;
+}
+
+#dialog_register_first{
+    min-width: 330px;
+    max-width: 448px;
+}
+
+#dialog_register_next{
+    min-width: 330px;
+    max-width: 448px;
+}
+
+.dialog-close{
+    display: inline-block;
+    float: right;
+    margin: 16px;
+}
+
+.dialog-content{
+    padding: 20px 50px;
+    height: 337px;
+}
+
+.dialog-action{
+    margin-top: 50px;
+}
+
+@media screen and (max-height: 638px){
+    .dialog-title-back{
+        height: 64px;
+        width: 100%;
+    }
+
+    .dialog-title{
+        padding-top: 24px;
+    }
+}
+
+@media screen and (max-height: 465px){
+    #dialog_login{
+        overflow-y: auto;
+    }
+
+    #dialog_register_first{
+        overflow-y: auto;
+    }
+
+    #dialog_register_next{
+        overflow-y: auto;
+    }
+}
+
+.dialog-register-captcha-div{
+    width: 120px;
+    display: inline-block;
+}
+.dialog-register-captcha-input-div{
+    display: inline-block;
+    width: auto;
+}
+.dialog-register-send{
+    height: 54px;
+    margin-top: 16px;
+}
+
+.captcha-img{
+    display: inline;
+    height: 36px;
+    width: 100px;
+    margin-top: 32px;
+}
+
+@media screen and (min-width: 600px) {
+    .card-m{
+        max-width: 700px !important;
+    }
+}
+
+.from-div{
+    display: inline-block;
+    height: 22px;
+    width: auto !important;
+    padding: 0 !important;
+    max-width: unset;
+}
+
+#page_div {
+    min-height:40px;
+    margin: 8px;
+}
+
+
+.btn-active{
+    background-color: rgba(0,0,0,.215)
+}
+
+
+
+

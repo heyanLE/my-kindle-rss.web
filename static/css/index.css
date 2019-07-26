@@ -1,0 +1,117 @@
+#first_wallpaper{
+    background-size: cover;
+    background-position-x: center;
+    background-position-y: center;
+    background-attachment: initial;
+    background-origin: initial;
+    background-clip: initial;
+    background-color: initial;
+    display: none;
+}
+.background-gray{
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.headline{
+    width: 500px;
+    text-align:center;
+    font-family: Microsoft YaHei,Roboto,serif;
+    font-weight: bold;
+    font-size: 32px;
+}
+.text-body{
+    padding-top: 20px;
+    text-align:center;
+    width: 500px;
+    font-family:Microsoft YaHei,Roboto,serif;
+    font-weight:lighter;
+    font-size: 27px;
+}
+
+.user-button{
+    font-family:Microsoft YaHei,Roboto,serif;
+    margin-top: 20px;
+    width: 260px;
+    height: 48px;
+    display: block !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+}
+
+#banner_content{
+    cursor:default;
+    width: auto;
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+.down{
+    cursor:default;
+    margin-top: -80px;
+    width: 100%;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    float: bottom;
+}
+
+@media screen and (max-width: 1024px){
+    .advertise{
+        display: block !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+    }
+}
+
+@media screen and (max-width: 600px){
+    .headline{
+        width: auto;
+        text-align:center;
+        font-family: Microsoft YaHei,Roboto,serif;
+        font-weight: normal;
+        font-size: 32px;
+    }
+    .text-body{
+        padding-top: 10px;
+        text-align:center;
+        width: auto;
+        font-family:Microsoft YaHei,Roboto,serif;
+        font-weight:lighter;
+        font-size: 27px;
+    }
+
+    .user-button{
+        font-family:Microsoft YaHei,Roboto,serif;
+        margin-top: 20px;
+        width: auto;
+        height: 48px;
+        display: block !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+    }
+}
+
+.card{
+    margin-top: 10px !important;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+.item-title{
+    margin-top: 3px;
+    width: auto;
+    color: black;
+    font-size: 14px;
+    font-weight:bold;
+    font-family:Microsoft YaHei,Roboto,serif;
+}
+
+.item-message{
+    height: 34px;
+    width: auto;
+    margin-top: 10px;
+    color: black;
+    font-size: 14px;
+    font-weight:normal;
+    font-family:Microsoft YaHei,Roboto,serif;
+}

@@ -24,6 +24,9 @@ func InitRouter() {
 	beego.Router("/api/v1/register-verify", &api.Controller{})
 	beego.Router("/api/v1/feed-list", &api.Controller{})
 	beego.Router("/api/v1/feed", &api.Controller{})
+	beego.Router("/api/v1/feed-refresh", &api.Controller{})
+	beego.Router("/api/v1/feed-from-list", &api.Controller{})
+	beego.Router("/api/v1/feed-class-list", &api.Controller{})
 
 	beego.Router("/api/v1/captcha", &api.CaptchaController{})
 	beego.Handler("/api/v1/captcha/img/*", api.InitHandler())
@@ -37,5 +40,10 @@ func TransparentStatic(ctx *context.Context) {
 	if strings.Index(orPath, "api") >= 0 {
 		return
 	}
-	http.ServeFile(ctx.ResponseWriter, ctx.Request, "static/html/"+orPath)
+	beego.Info("OrPath:", orPath)
+	switch orPath {
+	case "/home":
+		orPath = orPath + ".html"
+	}
+	http.ServeFile(ctx.ResponseWriter, ctx.Request, "static/"+orPath)
 }

@@ -12,7 +12,7 @@ User 结构体  		表名 ： user
 */
 type User struct {
 	Id           int64      `json:"id,omitempty"`
-	Email        string     `orm:"unique";json:"email,omitempty"`
+	Email        string     `orm:"unique" json:"email,omitempty"`
 	PasswordHash string     `json:"password_hash,omitempty"`
 	AimEmail     string     `json:"aim_email,omitempty"`
 	PushEmail    *PushEmail `json:"push_email,omitempty,omitempty" orm:"rel(fk)"`
@@ -33,9 +33,11 @@ RssFeed结构体			表名：rss_feed
 type RssFeed struct {
 	Id         int64   `json:"id,omitempty"`
 	Name       string  `json:"name,omitempty"`
-	Describe   string  `json:"describe,omitempty"`
+	Describe   string  `json:"describe"`
 	Value      string  `json:"value,omitempty"`
 	Type       int     `json:"type"`
+	From       string  `json:"from"`
+	Class      string  `json:"class"`
 	Subscriber []*User `orm:"rel(m2m)" json:"subscriber,omitempty"`
 }
 
@@ -70,7 +72,7 @@ func InitModels() {
 }
 
 func RunSyncDb() {
-	e := orm.RunSyncdb("default", true, true)
+	e := orm.RunSyncdb("default", false, true)
 	if e != nil {
 		beego.Error("同步错误 ： ", e.Error())
 		return
