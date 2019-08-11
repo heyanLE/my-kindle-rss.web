@@ -44,7 +44,7 @@
                         <span class="card-title">剩余自动推送次数</span>
                         <div id="balance_card_content" class="card-content">0</div>
                         <div class="card-actions-div">
-                            <button class="action mdui-btn mdui-ripple">充能</button>
+                            <button onclick="onChargeButtonClick()" class="action mdui-btn mdui-ripple">充能</button>
                         </div>
                     </div>
                 </div>
@@ -54,8 +54,8 @@
                         <span class="card-title">推送</span>
                         <div id="push_card_content" class="card-content">自动推送关闭</div>
                         <div class="card-actions-div">
-                            <button class="action-max mdui-btn mdui-ripple">立刻推送</button>
-                            <button class="action-max mdui-btn mdui-ripple">推送设置</button>
+                            <button class="action-max mdui-btn mdui-ripple" onclick="onPushNowClick()">立刻推送</button>
+                            <button class="action-max mdui-btn mdui-ripple" onclick="onPushSettingClick()">推送设置</button>
                         </div>
                     </div>
                 </div>
@@ -220,7 +220,64 @@
 </div>
 
 
+<div class="mdui-dialog" id="dialog_push_set" style="padding: 8px">
+    <div class="mdui-dialog-title">推送设置</div>
+    <ul class="mdui-list" style="margin-left: 20px;margin-right: 20px ; cursor: default">
+        <li class="mdui-list-item mdui-ripple">
+            <div class="mdui-list-item-content mdui-valign">
 
+                <span style="display: inline-block ; text-align: center ; height: 100% ; width: auto ; " class="mdui-float-left">
+                    自动推送
+                </span>
+
+                <label class="mdui-switch mdui-float-right mdui-valign" style="margin-right: 0; margin-left: auto">
+                    <input type="checkbox"/>
+                    <i class="mdui-switch-icon"></i>
+                </label>
+            </div>
+        </li>
+        <li class="mdui-list-item" style="cursor: default !important;">
+            <div class="mdui-list-item-content">
+                <div>
+                    推送时间
+                    <span style="margin-left: 10px">2时</span>
+                </div>
+                <label class="mdui-slider mdui-slider-discrete">
+                    <input type="range" step="1" min="0" max="23"/>
+                </label>
+            </div>
+        </li>
+        <li class="mdui-list-item" style="cursor: default !important;">
+            <div class="mdui-list-item-content">
+                <div class="mdui-valign">
+                    <span>〖发送至Kindle〗电子邮箱 </span>
+                    <button style="margin-right: 0 !important; margin-left: auto !important;" id="button_help" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">&#xe887;</i></button>
+                </div>
+
+                <div class="mdui-textfield" style="padding-top: 4px !important;">
+                    <input id="Push_Set_Dialog_AimEmail" class="mdui-textfield-input" type="email"/>
+                </div>
+            </div>
+        </li>
+
+        <li class="mdui-list-item mdui-ripple">
+            <div class="mdui-list-item-content">
+                <div class="mdui-valign">
+                    <span>推送邮箱 (点击复制)</span>
+                    <button style="margin-right: 0 !important; margin-left: auto !important;" id="button_help" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">&#xe887;</i></button>
+                </div>
+
+                <div class="mdui-textfield" style="padding-top: 4px !important;">
+                    <input id="Push_Set_Dialog_PushEmail" class="mdui-textfield-input" type="email" disabled value="1@kindle.cn" style=" cursor: text !important;"/>
+                </div>
+            </div>
+        </li>
+    </ul>
+
+</div>
+
+<div class="mdui-dialog" id="dialog_feed_dia">
+</div>
 <script src="js/mdui.min.js"></script>
 <script src="js/jquery-3.4.1.min.js"></script>
 <script src="js/fetch.js"></script>
@@ -234,7 +291,7 @@
         i =  parseInt(s);
         //constructor.log(s)
     }else{
-        i = Math.floor(Math.random()*13)+1;
+        i = Math.floor(Math.random()*11)+1;
     }
     const wDiv = document.getElementById("wallpaper");
 

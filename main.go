@@ -35,6 +35,7 @@ func main() {
 func InitSession() {
 	//beego的session序列号是用gob的方式，因此需要将注册models.User
 	gob.Register(new(models.User))
+	gob.Register(new(api.LoginRequest))
 	//https://beego.me/docs/mvc/controller/session.md
 	beego.BConfig.WebConfig.Session.SessionOn = true
 	beego.BConfig.WebConfig.Session.SessionName = "mykindlerss-key"

@@ -71,8 +71,15 @@ function finishInterLoad() {
     onClassLiClick("全部订阅");
 }
 
+/*登陆成功调用*/
 function getUserFeed() {
-
+    FetchGet("/api/v1/feed",(code , message , value)=>{
+        if (code === 200){
+            //console.log(value);
+            UserFeedList = value;
+            onFromSpanClick(NowChoseFrom);
+        }
+    })
 }
 
 function onClassLiClick(id) {
@@ -114,6 +121,15 @@ function newFromSpan(from) {
 
 function refreshFeedList() {
     showRightLoad();
+
+    if (NowChoseClass === "我的订阅"){
+        NowShowFeedList = UserFeedList;
+        NowPage = 1;
+        Page = Math.ceil(NowShowFeedList.length/16) === 0 ? 1 : Math.ceil(NowShowFeedList.length/16);
+        refreshFeedListReal();
+        return;
+    }
+
     const FeedL = FeedMapKeyClass[NowChoseClass];
     if (FeedL === undefined){
         return;
@@ -153,10 +169,13 @@ function refreshFeedListReal() {
 
 function newFeedLi(feed) {
     let s;
+    let c;
     if (isSub(feed)) {
         s = "已订阅";
+        c = "mdui-color-blue-accent";
     }else{
         s = "订阅";
+        c = "mdui-color-pink-accent"
     }
     const li = $("<ul id=\"feed_content_ul\" class=\"mdui-list\">\n" +
         "                            <li class=\"mdui-list-item\">\n" +
@@ -165,30 +184,187 @@ function newFeedLi(feed) {
         "                                    <div class=\"mdui-list-item-title\">"+feed.name+"</div>\n" +
         "                                    <div class=\"mdui-list-item-text\" style='margin-right: 40px'>"+feed.describe+"</div>\n" +
         "                                </div>\n" +
-        "                                <div id='feed_list_li_button_"+feed.id+"' class=\"mdui-color-pink-accent mdui-btn mdui-btn-dense mdui-ripple\" style=\"min-width: 50px;padding: 0\">"+s+"</div>\n" +
+        "                                <div id='feed_list_li_button_"+feed.id+"' class=\""+c+" mdui-btn mdui-btn-dense mdui-ripple\" style=\"min-width: 50px;padding: 0\">"+s+"</div>\n" +
         "                            </li>\n" +
         "                        </ul>");
     
     $("#feed_content_ul").append(li);
     $("#feed_list_li_button_"+feed.id).click(function (e) {
         e.stopPropagation();
-        onFeedLiButtonClick(feed.id);
+        onFeedLiButtonClick(feed);
     });
     li.click(function () {
-        onFeedLiClick(feed.id);
+        onFeedLiClick(feed);
     })
 }/*√*/
 
-function onFeedLiClick(id) {
-    console.log("LiClick")
+function onFeedLiClick(feed) {
+    FetchGet("/api/v1/article?_feed_id="+feed.id,(code,message,value) => {
+        //console.log(value[0].Link);
+        if (code === 200){
+            let aa = "";
+            for (let i = 0 ; i < (value.length<9?value.length:9) ; i ++){
+                let date = new Date(value[i].PubTime);
+                let yy = date.getFullYear();      //年
+                let mm = date.getMonth() + 1;     //月
+                let dd = date.getDate();          //日
+                //console.log(i);
+                aa += "<a target='_blank' href=\""+value[i].Link+"\" class=\"mdui-list-item mdui-ripple\">"+yy+"-"+mm+"-"+dd+"  |  "+value[i].Headline+"</a>";
+            }
+            let bb = "";
+            if (!isSub(feed)){
+                bb = "<button style='text-align: center !important;' id='dialog_feed_button' class=\"mdui-btn mdui-ripple mdui-text-color-pink-accent\">订阅</button>";
+            }else{
+                bb = "<button style='text-align: center !important;' id='dialog_feed_button' class=\"mdui-btn mdui-ripple mdui-text-color-blue-accent\">已订阅</button>";
+            }
+
+            let diaDia = $("#dialog_feed_dia");
+            let dia = $(
+                "    <div class=\"mdui-dialog-title\">"+feed.name+"</div>\n" +
+                "    <div class=\"mdui-dialog-content\">\n" +
+                "        <div class=\"mdui-list\">" + aa + "</div>\n" +
+                "    </div>\n" +
+                "    <div class=\"mdui-dialog-actions mdui-dialog-actions-stacked\">"+bb+"" +
+                "    <button style='text-align: center !important;' id='dialog_feed_button' class=\"mdui-btn mdui-ripple mdui-text-color-pink-accent\" mdui-dialog-close>取消</button>   " +
+                "</div>");
+
+            diaDia.empty();
+            diaDia.append(dia);
+
+            $("#dialog_feed_button").click(function () {
+                onFeedLiButtonClickWC(feed,(b) => {
+                    let l = $("#dialog_feed_button");
+                    if (b){
+                        l.text("已订阅");
+                        l.removeClass("mdui-text-color-pink-accent");
+                        l.addClass(" mdui-text-color-blue-accent");
+                    }else{
+                        l.text("订阅");
+                        l.removeClass("mdui-text-color-blue-accent");
+                        l.addClass(" mdui-text-color-pink-accent");
+                    }
+                })
+            });
+
+            let inst = new mdui.Dialog("#dialog_feed_dia");
+            inst.open();
+        }
+    })
 }
-function onFeedLiButtonClick(id) {
-    console.log("ButtonClick");
+function onFeedLiButtonClick(feed) {
+    //console.log("ButtonClick");
+    if (isSub(feed)){
+        //取消订阅
+        let ii = 0;
+        for(;ii < UserFeedList.length ; ii ++){
+            if (UserFeedList[ii].id === feed.id){
+                //console.log(ii);
+                break;
+            }
+        }
+        FetchDeleteWithBody("/api/v1/feed",{
+            "feed-id":feed.id
+        },(code,message,value) => {
+            if (code === 200){
+                UserFeedList.splice(ii,1);
+                //console.log(UserFeedList);
+                onFromSpanClick(NowChoseFrom);
+                mdui.snackbar({
+                    message: '已取消订阅',
+                    position:`top`
+                });
+            }else{
+                mdui.snackbar({
+                    message: message,
+                    position:`top`
+                });
+            }
+        })
+    }else{
+        //订阅
+        FetchPost("/api/v1/feed",{
+            "feed-id":feed.id
+        },(code,message,value) => {
+            if (code === 200){
+                UserFeedList[UserFeedList.length] = feed;
+                onFromSpanClick(NowChoseFrom);
+                mdui.snackbar({
+                    message: '订阅成功',
+                    position:`top`
+                });
+            }else{
+                mdui.snackbar({
+                    message: message,
+                    position:`top`
+                });
+            }
+        })
+    }
+    return false;
+}
+function onFeedLiButtonClickWC(feed,callback) {
+    //console.log("ButtonClick");
+    if (isSub(feed)){
+        //取消订阅
+        let ii = 0;
+        for(;ii < UserFeedList.length ; ii ++){
+            if (UserFeedList[ii].id === feed.id){
+                //console.log(ii);
+                break;
+            }
+        }
+        FetchDeleteWithBody("/api/v1/feed",{
+            "feed-id":feed.id
+        },(code,message,value) => {
+            if (code === 200){
+                UserFeedList.splice(ii,1);
+                //console.log(UserFeedList);
+                onFromSpanClick(NowChoseFrom);
+                mdui.snackbar({
+                    message: '已取消订阅',
+                    position:`top`
+                });
+                callback(false);
+            }else{
+                mdui.snackbar({
+                    message: message,
+                    position:`top`
+                });
+            }
+        })
+    }else{
+        //订阅
+        FetchPost("/api/v1/feed",{
+            "feed-id":feed.id
+        },(code,message,value) => {
+            if (code === 200){
+                UserFeedList[UserFeedList.length] = feed;
+                onFromSpanClick(NowChoseFrom);
+                mdui.snackbar({
+                    message: '订阅成功',
+                    position:`top`
+                });
+                callback(true);
+            }else{
+                mdui.snackbar({
+                    message: message,
+                    position:`top`
+                });
+            }
+        })
+    }
     return false;
 }
 
 function isSub(feed) {
-    return UserFeedList.indexOf(feed) !== -1;
+    for (let i = 0 ; i < UserFeedList.length ; i ++){
+        if (feed.id === UserFeedList[i].id){
+            //console.log("true");
+            return true;
+        }
+    }
+    //console.log(feed);
+    return false;
 }/*√*/
 
 function refreshFromDiv() {
@@ -359,7 +535,7 @@ function onPageButtonClick(page) {
 }
 
 function backTop() {
-    console.log("Top");
+    //console.log("Top");
     (function s(){
         let currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
         if (currentScroll > 0) {

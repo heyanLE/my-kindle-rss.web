@@ -16,6 +16,7 @@ type User struct {
 	PasswordHash string     `json:"password_hash,omitempty"`
 	AimEmail     string     `json:"aim_email,omitempty"`
 	PushEmail    *PushEmail `json:"push_email,omitempty,omitempty" orm:"rel(fk)"`
+	PushEmailAddress string  `json:"-"`
 	PushAuto     bool       `json:"push_auto,omitempty"`
 	Balance      uint       `json:"balance,omitempty"`
 	FeedIdList   []*RssFeed `orm:"reverse(many)" json:"feed_id_list,omitempty"`

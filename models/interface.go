@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	PushEmailSuffix = "@ikndle.cn"
+	PushEmailSuffix = "@mykindlerss.cn"
 )
 
 func Login(email string, password string) (User, error) {
@@ -49,6 +49,7 @@ func Register(email string, password string) (User, error) {
 		u.CreateTime = time.Now()
 		u.PushTime = 18
 		u.PushEmail = &pe
+		u.PushEmailAddress = pe.Address
 		e = o.QueryTable(new(PushEmail)).Filter("id", pe.Id).One(&pe)
 		if e != nil {
 			return u, e
@@ -191,3 +192,108 @@ func UserFeedPost(user *User, id int64) error {
 		return e
 	}
 }
+
+func UserFeedDelete(user *User , id int64) error {
+	o := orm.NewOrm()
+	feed := RssFeed{Id: id}
+	e := o.Read(&feed)
+	if e == orm.ErrMissPK || e == orm.ErrNoRows {
+		return FeedNotFound
+	} else if e == nil {
+		e = o.Read(user)
+		if e != nil {
+			return UserNotFound
+		}
+		m2m := o.QueryM2M(&feed, "Subscriber")
+		_, _ = m2m.Remove(user)
+
+		e = o.Begin()
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		_, e = o.Update(&feed)
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		_, e = o.Update(user)
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		e = o.Commit()
+		if e != nil {
+			_ = o.Rollback()
+			return e
+		}
+		return nil
+	} else {
+		return e
+	}
+}
+
+func Charge(user *User) error{
+
+	o := orm.NewOrm();
+	err := o.Begin()
+	if err != nil {
+		err = o.Rollback()
+		return err
+	}
+
+	user.Balance = 7
+	_, err = o.Update(user,"Balance")
+	if err != nil {
+		err = o.Rollback()
+		return err
+	}
+
+	err = o.Commit()
+	return err
+
+
+}
+
+func SetAimEmail(user *User) error{
+
+	o := orm.NewOrm();
+	err := o.Begin()
+	if err != nil {
+		err = o.Rollback()
+		return err
+	}
+
+	_, err = o.Update(user,"AimEmail")
+	if err != nil {
+		err = o.Rollback()
+		return err
+	}
+
+	err = o.Commit()
+	return err
+
+
+}
+
+func SetAuto(user *User) error{
+
+	o := orm.NewOrm();
+	err := o.Begin()
+	if err != nil {
+		err = o.Rollback()
+		return err
+	}
+
+	_, err = o.Update(user,"PushAuto")
+	if err != nil {
+		err = o.Rollback()
+		return err
+	}
+
+	err = o.Commit()
+	return err
+
+
+}
+

@@ -124,9 +124,7 @@ function refreshUser() {
         $("#user_card_action_out").css("display","none");
         $("#user_card_action_up").css("display","block");
     }
-    const w = $("#wallpaper");
-    w.fadeToggle(1);
-    w.fadeToggle(800);
+    getUserFeed();
 }/*√*/
 /*=================Click======================*/
 
@@ -439,3 +437,50 @@ function onRegisterButtonClick() {
         }
     })
 }/*√*/
+
+function onPushSettingClick() {
+    if (User === null || User === undefined){
+        mdui.snackbar({
+            message: '请先登录',
+            position:`top`
+        });
+    }else{
+        console.log(User);
+        console.log(User.push_email);
+        $("#Push_Set_Dialog_AimEmail").val(User.aim_email);
+        $("#Push_Set_Dialog_PushEmail").val(User.push_email.address);
+        new mdui.Dialog("#dialog_push_set").open();
+    }
+}
+
+function onChargeButtonClick() {
+    if (User === null || User === undefined){
+        mdui.snackbar({
+            message: '请先登录',
+            position:`top`
+        });
+    }else{
+        FetchGet("/api/v1/change",(code,message) => {
+            if (code === 200){
+                mdui.snackbar({
+                    message: '充能成功，剩余可推送次数重置为7',
+                    position:`top`
+                });
+                User.balance = 7;
+                $("#balance_card_content").text(User.balance);
+            }else{
+                mdui.snackbar({
+                    message: message,
+                    position:`top`
+                });
+            }
+        })
+    }
+}
+
+function onPushNowClick() {
+    mdui.snackbar({
+        message: '该功能还在开发中喔',
+        position:`top`
+    });
+}

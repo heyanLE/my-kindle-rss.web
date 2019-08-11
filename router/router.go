@@ -28,6 +28,9 @@ func InitRouter() {
 	beego.Router("/api/v1/feed-from-list", &api.Controller{})
 	beego.Router("/api/v1/feed-class-list", &api.Controller{})
 
+	beego.Router("/api/v1/article", &api.Controller{})
+	beego.Router("/api/v1/change", &api.Controller{})
+
 	beego.Router("/api/v1/captcha", &api.CaptchaController{})
 	beego.Handler("/api/v1/captcha/img/*", api.InitHandler())
 

@@ -6,10 +6,13 @@ import (
 	"github.com/astaxie/beego/cache"
 	_ "github.com/astaxie/beego/cache/memcache"
 	_ "github.com/astaxie/beego/cache/redis"
+	"io/ioutil"
 	"math/rand"
 	"my-kindle-rss/models"
 	"my-kindle-rss/utils"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -39,6 +42,15 @@ type RegisterRequest struct {
 	Token    string `json:"token"`
 	DateUnix int64  `json:"date_unix"`
 	Captcha  string `json:"captcha"`
+}
+
+type Article struct {
+	Title 		string 		`json:"Headline"`
+	Content 	string 		`json:"Content"`
+	ImgStart 	int 		`json:"ImgStart"`
+	ImgEnd 		int 		`json:"ImgEnd"`
+	PubTime		int64		`json:"PubTime"`
+	Link 		string 		`json:"Link"`
 }
 
 func (c *Controller) Get() {
@@ -78,6 +90,13 @@ func (c *Controller) Get() {
 		break
 	case "/api/v1/feed-refresh":
 		c.FeedListRefresh()
+		break
+
+	case "/api/v1/article":
+		c.ArticleGet()
+		break
+	case "/api/v1/change":
+		c.ChargeGet()
 		break
 
 	}
@@ -134,7 +153,6 @@ func (c *Controller) Post() {
 }
 
 func (c *Controller) Delete() {
-
 	accept := c.Ctx.Input.Header("Accept")
 	acceptLanguage := c.Ctx.Input.Header("Accept-Language")
 	contentType := c.Ctx.Input.Header("Content-Type")
@@ -145,20 +163,30 @@ func (c *Controller) Delete() {
 	}
 
 	path := c.Ctx.Request.URL.Path
+	beego.Info("Delete ：",path)
 	switch path {
 	case "/api/v1/user":
 		c.UserDelete()
+		break
+	case "/api/v1/feed":
+		c.FeedDelete()
 		break
 	}
 
 }
 
 func (c *Controller) UserGet() {
-	u := c.GetSession(UserSessionKey)
-	if u != nil {
-		c.ResponseJsonWithValue(200, "获取当前登录用户信息成功", &u)
-	} else {
+	u:= c.GetSession(UserSessionKey)
+	if u == nil {
 		c.ResponseJson(404, "当前没有登录用户")
+	}else{
+		lr := u.(*LoginRequest)
+		u,e := models.Login(lr.Email,lr.Password)
+		if e == nil {
+			c.ResponseJsonWithValue(200, "获取当前登录用户信息成功", &u)
+		}else{
+			c.ResponseJson(404, "当前没有登录用户")
+		}
 	}
 }
 
@@ -170,7 +198,7 @@ func (c *Controller) UserPost() {
 		u, e := models.Login(lq.Email, lq.Password)
 		if e == nil {
 			c.ResponseJsonWithValue(200, "登陆成功", &u)
-			c.SetSession(UserSessionKey, &u)
+			c.SetSession(UserSessionKey, &lq)
 		} else if e == models.IncorrectUserOPassErr {
 			c.ResponseJson(404, "用户名或密码错误")
 		} else {
@@ -185,6 +213,45 @@ func (c *Controller) UserPost() {
 func (c *Controller) UserDelete() {
 	c.DelSession(UserSessionKey)
 	c.ResponseJson(200, "已删除用户Session")
+}
+
+func (c *Controller) FeedDelete(){
+	u := c.GetSession(UserSessionKey)
+	if u == nil {
+		c.ResponseJson(404, "请登录")
+	} else {
+		lr := u.(*LoginRequest)
+		u, e := models.Login(lr.Email, lr.Password)
+		if e == nil {
+			idM := make(map[string]int64)
+			body := c.Ctx.Input.RequestBody
+			e = json.Unmarshal(body, &idM)
+			if e == nil {
+				if id, ok := idM["feed-id"]; ok {
+					e = models.UserFeedDelete(&u, id)
+					if e == models.FeedNotFound {
+						c.ResponseJson(400, "Feed不存在")
+					} else if e == models.UserNotFound {
+						c.DelSession(UserSessionKey)
+						c.ResponseJson(404, "登录信息错误，请重新登陆")
+					} else if e == nil {
+						c.ResponseJson(200, "取消订阅成功")
+					} else {
+						c.ResponseJson(500, "未知错误："+e.Error())
+					}
+				} else {
+					c.ResponseJson(400, "参数错误")
+				}
+			} else {
+				c.ResponseJson(400, "参数错误")
+			}
+		} else if e == models.IncorrectUserOPassErr {
+			c.DelSession(UserSessionKey)
+			c.ResponseJson(404, "登录信息错误，请重新登陆")
+		} else {
+			c.ResponseJson(500, "未知错误："+e.Error())
+		}
+	}
 }
 
 func (c *Controller) RegisterGet() {
@@ -212,6 +279,66 @@ func (c *Controller) RegisterGet() {
 	}
 }
 
+func (c *Controller) ArticleGet(){
+
+	s,e := c.GetInt("_feed_id")
+	if e != nil {
+		c.ResponseJson(400, "参数错误")
+		return
+	}
+
+	path := beego.AppConfig.String("feed_entry_path")+"/"+strconv.Itoa(s)+"/Entry.json"
+	jsonS := read(path)
+
+
+	var r []*Article
+	dec := json.NewDecoder(strings.NewReader(jsonS))
+	e = dec.Decode(&r)
+	if e != nil {
+		c.ResponseJson(500, e.Error())
+		return
+	}
+
+	c.ResponseJsonWithValue(200,"获取成功",&r)
+
+	
+
+}
+func read(name string) string {
+	result := ""
+	if fileObj,err := os.Open(name);err == nil {
+		//if fileObj,err := os.OpenFile(name,os.O_RDONLY,0644); err == nil {
+		defer fileObj.Close()
+		if contents,err := ioutil.ReadAll(fileObj); err == nil {
+			result = strings.Replace(string(contents),"\n","",1)
+		}
+
+	}
+	return result
+}
+
+func (c *Controller) ChargeGet() {
+
+	u:= c.GetSession(UserSessionKey)
+	if u == nil {
+		c.ResponseJson(404, "当前没有登录用户")
+	}else{
+		lr := u.(*LoginRequest)
+		u,e := models.Login(lr.Email,lr.Password)
+		if e == nil {
+			e = models.Charge(&u)
+			if e == nil {
+				c.ResponseJson(200, "充能成功")
+			}else{
+				c.ResponseJson(500, e.Error())
+			}
+		}else{
+			c.ResponseJson(404, "当前没有登录用户")
+		}
+	}
+
+}
+
 func (c *Controller) RegisterPost() {
 	rq := RegisterRequest{}
 	body := c.Ctx.Input.RequestBody
@@ -229,7 +356,7 @@ func (c *Controller) RegisterPost() {
 				if e == models.EmailExistErr {
 					c.ResponseJson(231, "邮箱已存在")
 				} else if e == nil {
-					c.SetSession(UserSessionKey, &u)
+					c.SetSession(UserSessionKey, &rq)
 					c.ResponseJsonWithValue(200, "注册成功", &u)
 				} else {
 					beego.Error("RegisterPostErr :", e.Error())
@@ -312,7 +439,7 @@ func (c *Controller) FeedPost() {
 			body := c.Ctx.Input.RequestBody
 			e = json.Unmarshal(body, &idM)
 			if e == nil {
-				if id, ok := idM["Feed-id"]; ok {
+				if id, ok := idM["feed-id"]; ok {
 					e = models.UserFeedPost(&u, id)
 					if e == models.FeedNotFound {
 						c.ResponseJson(400, "Feed不存在")
@@ -330,6 +457,72 @@ func (c *Controller) FeedPost() {
 			} else {
 				c.ResponseJson(400, "参数错误")
 			}
+		} else if e == models.IncorrectUserOPassErr {
+			c.DelSession(UserSessionKey)
+			c.ResponseJson(404, "登录信息错误，请重新登陆")
+		} else {
+			c.ResponseJson(500, "未知错误："+e.Error())
+		}
+	}
+}
+
+func (c *Controller) AimEmailPost(){
+	u := c.GetSession(UserSessionKey)
+	if u == nil {
+		c.ResponseJson(404, "请登录")
+	} else {
+		lr := u.(*LoginRequest)
+		u, e := models.Login(lr.Email, lr.Password)
+		if e == nil {
+			 m := make(map[string]string)
+			body := c.Ctx.Input.RequestBody
+			e = json.Unmarshal(body, &m)
+			if aim, ok := m["aim_email"]; ok {
+				u.AimEmail = aim
+				e = models.SetAimEmail(&u)
+				if e == nil{
+					c.ResponseJson(200,"更改目标邮箱成功")
+				}else{
+					c.ResponseJson(500,e.Error())
+				}
+			}else{
+				c.ResponseJson(400,"参数错误")
+			}
+
+
+		} else if e == models.IncorrectUserOPassErr {
+			c.DelSession(UserSessionKey)
+			c.ResponseJson(404, "登录信息错误，请重新登陆")
+		} else {
+			c.ResponseJson(500, "未知错误："+e.Error())
+		}
+	}
+}
+
+func (c *Controller) AutoPushPost(){
+	u := c.GetSession(UserSessionKey)
+	if u == nil {
+		c.ResponseJson(404, "请登录")
+	} else {
+		lr := u.(*LoginRequest)
+		u, e := models.Login(lr.Email, lr.Password)
+		if e == nil {
+			m := make(map[string]string)
+			body := c.Ctx.Input.RequestBody
+			e = json.Unmarshal(body, &m)
+			if a, ok := m["auto_push"]; ok {
+				u.PushAuto = a == "true"
+				e = models.SetAuto(&u)
+				if e == nil{
+					c.ResponseJson(200,"更改自动推送设置成功")
+				}else{
+					c.ResponseJson(500,e.Error())
+				}
+			}else{
+				c.ResponseJson(400,"参数错误")
+			}
+
+
 		} else if e == models.IncorrectUserOPassErr {
 			c.DelSession(UserSessionKey)
 			c.ResponseJson(404, "登录信息错误，请重新登陆")
